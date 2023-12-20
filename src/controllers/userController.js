@@ -2,12 +2,13 @@
 const createError = require('http-errors');
 const User = require('../models/userModel');
 const { successResponse } = require('./responsController');
+const { findWithId } = require('../services/findItem');
 
 const getUsers = async (req, res, next) => {
     try {
         const search = req.query.search || "";
         const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 1;
+        const limit = Number(req.query.limit) || 5;
 
         const searchRegExp = new RegExp('.*' + search + '.*', 'i');
         const filter = {
@@ -45,4 +46,38 @@ const getUsers = async (req, res, next) => {
     }
 }
 
-module.exports = getUsers;
+const getUser = async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        const options = { password: 0 };
+        const user = await findWithId(id,options);
+        return successResponse(res, {
+            statusCode: 200,
+            message: 'User returned successfully',
+            payload: {
+                user,
+            }
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+const deleteUser = async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        const options = { password: 0 };
+        const user = await findWithId(id,options);
+         await User.findByIdAndDelete({
+            _id:id,
+            isAdmin:false,
+         })
+        return successResponse(res, {
+            statusCode: 200,
+            message: 'User were delete successfully',
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = { getUsers,getUser,deleteUser };
